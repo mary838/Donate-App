@@ -1,0 +1,11 @@
+{
+  "navbar": {
+    "home": "Home",
+    "donate": "Donate",
+    "browse": "Browse",
+    "howWeWork": "How We Work",
+    "contact": "Contact",
+    "login": "Login",
+    "signup": "Sign Up"
+  }
+}
