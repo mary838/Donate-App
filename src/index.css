@@ -1,0 +1,6 @@
+@import "tailwindcss";
+/* If the html lang is Khmer, bump the font size slightly or use a Khmer font */
+html[lang="km"] {
+  font-family: "Kantumruy Pro", sans-serif;
+  font-size: 105%;
+}
