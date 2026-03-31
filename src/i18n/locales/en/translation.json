@@ -8,9 +8,6 @@
     "login": "Login",
     "signUp": "Sign Up"
   },
-  "footer": {
-    "text": "© 2026 Your App. All rights reserved."
-  },
   "home": {
     "hero": {
       "tagline": "Connecting people with each other",
@@ -143,5 +140,21 @@
       "q4": "How are organizations verified?",
       "a4": "All organizations go through a verification process."
     }
+  },
+  "footer": {
+    "description": "Connecting donors with charities and individuals in need. Reduce waste, reuse items, build community.",
+    "platform": "Platform",
+    "donateItems": "Donate Items",
+    "browseDonations": "Browse Donations",
+    "howItWorks": "How It Works",
+    "support": "Support",
+    "contactUs": "Contact Us",
+    "faq": "FAQ",
+    "helpCenter": "Help Center",
+    "legal": "Legal",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms Of Service",
+    "cookiePolicy": "Cookie Policy",
+    "copyright": "© 2026 GiveFlow. Made with ❤ by Hong Sophaline & Thoeun Mary"
   }
 }

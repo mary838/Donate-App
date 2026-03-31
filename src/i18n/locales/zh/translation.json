@@ -8,9 +8,6 @@
     "login": "登录",
     "signUp": "注册"
   },
-  "footer": {
-    "text": "© 2026 您的应用。保留所有权利。"
-  },
   "home": {
     "hero": {
       "tagline": "连接人与人",
@@ -96,10 +93,6 @@
     "submit": "提交捐赠"
   },
 
-  "browse": {
-    "title": "浏览捐赠",
-    "subtitle": "在您的地区查找可捐赠的物品"
-  },
   "howItWorks": {
     "subtitle": "运作方式",
     "title": "四个简单步骤",
@@ -143,5 +136,30 @@
       "q4": "机构如何验证？",
       "a4": "所有机构都会经过审核。"
     }
+  },
+  "navbar2": {
+    "home": "首页",
+    "donate": "捐赠",
+    "browse": "浏览",
+    "howItWorks": "运作原理",
+    "contact": "联系我们",
+    "login": "登录",
+    "signUp": "注册"
+  },
+  "footer": {
+    "description": "连接捐赠者与慈善机构及有需要的人。减少浪费，循环利用，建设社区。",
+    "platform": "平台",
+    "donateItems": "捐赠物品",
+    "browseDonations": "浏览捐赠",
+    "howItWorks": "运作原理",
+    "support": "支持",
+    "contactUs": "联系我们",
+    "faq": "常见问题",
+    "helpCenter": "帮助中心",
+    "legal": "法律信息",
+    "privacyPolicy": "隐私政策",
+    "termsOfService": "服务条款",
+    "cookiePolicy": "Cookie 政策",
+    "copyright": "© 2026 GiveFlow. 由 Hong Sophaline & Thoeun Mary 用 ❤ 制作"
   }
 }
