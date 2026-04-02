@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import hero from "../assets/hero-home.webp";
 import {
@@ -19,6 +19,19 @@ import {
 
 const HomePage: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  // AUTH LOGIC: Checks if a user is logged in (e.g., checking localStorage)
+  // Replace "user_token" with whatever key you use for your login session
+  const isLoggedIn = !!localStorage.getItem("user_token");
+
+  const handleGetStarted = () => {
+    if (isLoggedIn) {
+      navigate("/donate");
+    } else {
+      navigate("/signup");
+    }
+  };
 
   const features = [
     {
@@ -102,7 +115,10 @@ const HomePage: React.FC = () => {
             {t("home.hero.desc")}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center md:justify-start">
-            <button className="bg-[#B33D11] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#96320e] transition-all">
+            <button
+              onClick={handleGetStarted}
+              className="bg-[#B33D11] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#96320e] transition-all"
+            >
               {t("home.hero.getStarted")}
             </button>
             <Link to="/how-it-works">
@@ -134,11 +150,11 @@ const HomePage: React.FC = () => {
             {features.map((f, i) => (
               <div
                 key={i}
-                className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 text-left hover:shadow-md transition-all"
+                className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-left hover:shadow-md transition-all"
               >
                 <div className="text-gray-700 mb-3">{f.icon}</div>
                 <h3 className="font-bold text-lg mb-1">{f.title}</h3>
-                <p className="text-gray-500 text-sm sm:text-base leading-relaxed">
+                <p className="text-gray-500 text-sm leading-relaxed">
                   {f.desc}
                 </p>
               </div>
@@ -149,23 +165,21 @@ const HomePage: React.FC = () => {
 
       {/* Categories Section */}
       <section className="py-12 md:py-20 bg-white">
-        <div className="max-w-6xl mx-auto text-center px-4 md:px-10">
+        <div className="max-w-6xl mx-auto text-center px-4">
           <h4 className="text-[#B33D11] font-bold mb-2">
             {t("home.categories.title")}
           </h4>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 md:mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-8">
             {t("home.categories.subtitle")}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
             {categories.map((c, i) => (
               <div
                 key={i}
-                className="border border-gray-200 rounded-lg p-4 md:p-6 flex flex-col items-center gap-2 md:gap-3 hover:border-[#B33D11] hover:text-[#B33D11] transition-all cursor-pointer"
+                className="border border-gray-200 rounded-lg p-6 flex flex-col items-center gap-3 hover:border-[#B33D11] hover:text-[#B33D11] transition-all cursor-pointer"
               >
                 {c.icon}
-                <span className="font-bold text-sm sm:text-base md:text-base">
-                  {c.name}
-                </span>
+                <span className="font-bold text-sm">{c.name}</span>
               </div>
             ))}
           </div>
@@ -173,28 +187,21 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-12 md:py-20 px-6 md:px-20 text-center">
+      <section className="py-12 md:py-20 px-6 text-center">
         <h4 className="text-[#B33D11] font-bold mb-2 uppercase tracking-widest text-sm">
           {t("home.steps.title")}
         </h4>
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 md:mb-16 italic">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-12 italic">
           {t("home.steps.subtitle")}
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-6xl mx-auto">
           {steps.map((step) => (
-            <div
-              key={step.id}
-              className="space-y-2 sm:space-y-3 md:space-y-4 text-left sm:text-center"
-            >
-              <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#38C1E2] block">
+            <div key={step.id} className="space-y-4 text-left md:text-center">
+              <span className="text-4xl font-extrabold text-[#38C1E2] block">
                 {step.id}
               </span>
-              <h3 className="font-bold text-lg sm:text-xl md:text-xl">
-                {step.title}
-              </h3>
-              <p className="text-gray-500 text-sm sm:text-base md:text-base">
-                {step.desc}
-              </p>
+              <h3 className="font-bold text-xl">{step.title}</h3>
+              <p className="text-gray-500 text-sm">{step.desc}</p>
             </div>
           ))}
         </div>
