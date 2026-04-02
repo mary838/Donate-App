@@ -6,7 +6,9 @@
     "howItWorks": "How it works",
     "contact": "Contact",
     "login": "Login",
-    "signUp": "Sign Up"
+    "signUp": "Sign Up",
+    "notifications": "Notifications",
+    "profile": "Profile"
   },
   "home": {
     "hero": {
@@ -72,7 +74,8 @@
       "title": "Item Title",
       "category": "Category Item",
       "description": "Description",
-      "photos": "Photos"
+      "photos": "Photos",
+      "location": "Pickup Location"
     },
     "placeholders": {
       "title": "e.g., Winter jacket, like new",
@@ -134,7 +137,7 @@
       "a1": "You can donate clothes, furniture, books, electronics, kitchen items, baby goods, and more.",
       "q2": "How does pickup work?",
       "a2": "You can schedule a pickup after matching with an organization.",
-      "q3": "Is there a cost to use KindDrop?",
+      "q3": "Is there a cost to use GiveFlow?",
       "a3": "No! It is completely free.",
       "q4": "How are organizations verified?",
       "a4": "All organizations go through a verification process."
@@ -210,5 +213,20 @@
     "noAccount": "Don't have an account?",
     "signupLink": "Sign up",
     "createAccountBtn": "Create an account"
+  },
+  "editProfile": {
+    "backToProfile": "Back to Profile",
+    "title": "Edit Profile",
+    "subtitle": "Update your personal information and how others see you.",
+    "profilePicture": "Profile Picture",
+    "photoSpecs": "JPG, PNG or GIF • Max 2MB",
+    "fullName": "Full Name",
+    "phoneNumber": "Phone Number",
+    "location": "Location / City",
+    "bio": "Short Bio",
+    "bioPlaceholder": "Tell us a bit about yourself...",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "success": "Profile updated successfully!"
   }
 }
