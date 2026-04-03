@@ -1,53 +1,187 @@
+// import React, { useState } from "react";
+// import { Link } from "react-router-dom";
+// import { useTranslation } from "react-i18next"; // Added
+
+// const LoginPage: React.FC = () => {
+//   const { t } = useTranslation(); // Initialize translation
+//   const [phone, setPhone] = useState<string>("");
+
+//   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+//     e.preventDefault();
+//     console.log("Logging in with phone:", phone);
+//     // TODO: Connect your OTP authentication logic here
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-[#FDFCFB] flex flex-col items-center justify-center py-12 px-4">
+//       <div className="w-full max-w-xl flex flex-col items-center">
+//         {/* Title */}
+//         <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-12">
+//           {t("login.title")}
+//         </h1>
+
+//         <form onSubmit={handleSubmit} className="w-full">
+//           {/* Phone Number Field */}
+//           <div className="flex flex-col space-y-1.5 mb-4">
+//             <label className="text-xs text-gray-500 font-medium">
+//               {t("login.phoneLabel")}
+//             </label>
+//             <input
+//               type="tel"
+//               value={phone}
+//               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+//                 setPhone(e.target.value)
+//               }
+//               placeholder="+855 123 456 789"
+//               className="w-full p-3.5 bg-gray-100 text-gray-800 text-sm rounded-md focus:outline-none focus:bg-white focus:ring-1 focus:ring-gray-300 transition-all"
+//               required
+//             />
+//           </div>
+
+//           {/* OTP / Login Button */}
+//           <button
+//             type="submit"
+//             className="w-full mt-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm rounded-md shadow-sm transition-colors"
+//           >
+//             {t("login.sendOtp")}
+//           </button>
+//         </form>
+
+//         {/* Account help links */}
+//         <div className="mt-4 text-xs text-gray-600">
+//           {t("login.noAccount")}{" "}
+//           <Link
+//             to="/signup"
+//             className="text-blue-500 underline hover:text-blue-600"
+//           >
+//             {t("login.signupLink")}
+//           </Link>
+//         </div>
+
+//         {/* CTA Button to Register */}
+//         <div className="mt-16">
+//           <Link
+//             to="/signup"
+//             className="inline-block px-10 py-3 bg-orange-700 hover:bg-orange-800 text-white text-sm font-semibold rounded-md shadow-sm transition-colors"
+//           >
+//             {t("login.createAccountBtn")}
+//           </Link>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default LoginPage;
+
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next"; // Added
+import { Link, useNavigate } from "react-router-dom"; // 1. Import useNavigate
+import { useTranslation } from "react-i18next";
+import { Eye, EyeOff } from "lucide-react";
 
 const LoginPage: React.FC = () => {
-  const { t } = useTranslation(); // Initialize translation
-  const [phone, setPhone] = useState<string>("");
+  const { t } = useTranslation();
+  const navigate = useNavigate(); // 2. Initialize the navigate function
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [phone, setPhone] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Logging in with phone:", phone);
-    // TODO: Connect your OTP authentication logic here
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        "https://material-donation-backend-3.onrender.com/api/v1/auth/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, password }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Invalid credentials");
+      }
+
+      // 3. Save the token so the user stays logged in
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        // Optional: Save user info if your API returns it
+        // localStorage.setItem("user", JSON.stringify(data.user));
+      }
+
+      // 4. DIRECT REDIRECT TO HOME PAGE
+      // Replace "/" with your actual home route path (e.g., "/home" or "/dashboard")
+      navigate("/");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#FDFCFB] flex flex-col items-center justify-center py-12 px-4">
       <div className="w-full max-w-xl flex flex-col items-center">
-        {/* Title */}
         <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-12">
           {t("login.title")}
         </h1>
 
-        <form onSubmit={handleSubmit} className="w-full">
-          {/* Phone Number Field */}
-          <div className="flex flex-col space-y-1.5 mb-4">
+        <form onSubmit={handleSubmit} className="w-full space-y-6">
+          <div className="flex flex-col space-y-1.5">
             <label className="text-xs text-gray-500 font-medium">
               {t("login.phoneLabel")}
             </label>
             <input
               type="tel"
               value={phone}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setPhone(e.target.value)
-              }
+              onChange={(e) => setPhone(e.target.value)}
               placeholder="+855 123 456 789"
               className="w-full p-3.5 bg-gray-100 text-gray-800 text-sm rounded-md focus:outline-none focus:bg-white focus:ring-1 focus:ring-gray-300 transition-all"
               required
             />
           </div>
 
-          {/* OTP / Login Button */}
+          <div className="flex flex-col space-y-1.5">
+            <label className="text-xs text-gray-500 font-medium">
+              {t("signup.password")}
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-3.5 bg-gray-100 text-gray-800 text-sm rounded-md pr-12 focus:outline-none focus:bg-white focus:ring-1 focus:ring-gray-300 transition-all"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-4 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          {error && <p className="text-red-500 text-xs font-medium">{error}</p>}
+
           <button
             type="submit"
-            className="w-full mt-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm rounded-md shadow-sm transition-colors"
+            disabled={isLoading}
+            className={`w-full mt-4 py-3 ${isLoading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"} text-white font-semibold text-sm rounded-md shadow-sm transition-colors`}
           >
-            {t("login.sendOtp")}
+            {isLoading ? "Checking..." : t("login.button") || "Login"}
           </button>
         </form>
 
-        {/* Account help links */}
         <div className="mt-4 text-xs text-gray-600">
           {t("login.noAccount")}{" "}
           <Link
@@ -55,16 +189,6 @@ const LoginPage: React.FC = () => {
             className="text-blue-500 underline hover:text-blue-600"
           >
             {t("login.signupLink")}
-          </Link>
-        </div>
-
-        {/* CTA Button to Register */}
-        <div className="mt-16">
-          <Link
-            to="/signup"
-            className="inline-block px-10 py-3 bg-orange-700 hover:bg-orange-800 text-white text-sm font-semibold rounded-md shadow-sm transition-colors"
-          >
-            {t("login.createAccountBtn")}
           </Link>
         </div>
       </div>

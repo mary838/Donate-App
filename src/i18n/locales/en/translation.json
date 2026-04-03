@@ -209,10 +209,13 @@
   "login": {
     "title": "Sign in",
     "phoneLabel": "Phone Number",
-    "sendOtp": "Send OTP",
+    "passwordLabel": "Password",
+    "button": "Login",
+    "loading": "Checking...",
     "noAccount": "Don't have an account?",
     "signupLink": "Sign up",
-    "createAccountBtn": "Create an account"
+    "createAccountBtn": "Create an account",
+    "sendOtp": "Send OTP"
   },
   "editProfile": {
     "backToProfile": "Back to Profile",
