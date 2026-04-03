@@ -206,10 +206,13 @@
   "login": {
     "title": "登录",
     "phoneLabel": "电话号码",
-    "sendOtp": "发送验证码",
-    "noAccount": "没有账户？",
-    "signupLink": "注册",
-    "createAccountBtn": "创建一个账户"
+    "passwordLabel": "密码",
+    "button": "登录",
+    "loading": "正在检查...",
+    "noAccount": "还没有账号？",
+    "signupLink": "立即注册",
+    "createAccountBtn": "创建新账号",
+    "sendOtp": "发送验证码"
   },
   "editProfile": {
     "backToProfile": "返回个人资料",

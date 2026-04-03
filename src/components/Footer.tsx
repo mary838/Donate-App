@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next"; // 1. Import hook
-import logoImg from "../assets/logo-footer.png";
+import logoImg from "../assets/logo-removebg-preview.png";
 
 const Footer = () => {
   const { t } = useTranslation(); // 2. Initialize translation

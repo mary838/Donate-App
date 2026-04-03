@@ -209,10 +209,13 @@
   "login": {
     "title": "ចូលប្រើ",
     "phoneLabel": "លេខទូរស័ព្ទ",
-    "sendOtp": "ផ្ញើលេខកូដ OTP",
+    "passwordLabel": "លេខសម្ងាត់",
+    "button": "ចូល",
+    "loading": "កំពុងពិនិត្យ...",
     "noAccount": "មិនទាន់មានគណនីមែនទេ?",
     "signupLink": "ចុះឈ្មោះ",
-    "createAccountBtn": "បង្កើតគណនី"
+    "createAccountBtn": "បង្កើតគណនី",
+    "sendOtp": "ផ្ញើលេខកូដ OTP"
   },
   "editProfile": {
     "backToProfile": "ត្រឡប់ទៅកាន់ព័ត៌មានផ្ទាល់ខ្លួន",
