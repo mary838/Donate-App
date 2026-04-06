@@ -18,9 +18,9 @@ export default function Donate() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<{type: 'success'|'error', text: string}|null>(null);
 
-  const getAuthHeader = (): Record<string, string> => {
+  const getAuthHeader = () => {
     const token = localStorage.getItem("token");
-    return token ? { "Authorization": `Bearer ${token}` } : {};
+    return token ? { "Authorization": `Bearer ${token}` } : {} as Record<string, string>;
   };
 
   useEffect(() => {
