@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import SearchBar from "../components/SearchBar";
 import CategoryFilter from "../components/CategoryFilter";
 import DonationGrid from "../components/DonationGrid";
-import { AlertCircle, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { DonationItem } from "../components/DonationCard";
 
 const BASE_URL = "https://material-donation-backend-3.onrender.com";
@@ -21,7 +21,7 @@ export default function Browse() {
 
   const getAuthHeader = () => {
     const token = localStorage.getItem("token");
-    return token ? { "Authorization": `Bearer ${token}` } : undefined;
+    return token ? { "Authorization": `Bearer ${token}` } : {};
   };
 
   useEffect(() => {
@@ -29,32 +29,30 @@ export default function Browse() {
       setIsLoading(true);
       setError(null);
       try {
-        // 1. Fetch Categories from the correct endpoint with Auth
-        const catRes = await fetch(`${BASE_URL}/api/categories`, { 
-          headers: getAuthHeader() 
-        });
-        const catData = await catRes.json();
-        const catList = Array.isArray(catData) ? catData : (catData.content || []);
-        setCategories(catList);
+        const [catRes, donRes] = await Promise.all([
+          fetch(`${BASE_URL}/api/categories`, { headers: getAuthHeader() as any }),
+          fetch(`${BASE_URL}/api/v1/donations`, { headers: getAuthHeader() as any })
+        ]);
 
-        // 2. Fetch Donations
-        const donRes = await fetch(`${BASE_URL}/api/v1/donations`, { 
-          headers: getAuthHeader() 
-        });
-        
+        const catData = await catRes.json();
+        setCategories(Array.isArray(catData) ? catData : (catData.content || []));
+
         if (!donRes.ok) throw new Error("Failed to fetch donations");
-        
         const donData = await donRes.json();
         const items = Array.isArray(donData) ? donData : (donData.content || []);
 
         const mappedItems = items.map((item: any) => ({
           id: item.id,
           title: item.title,
-          location: item.location || "Unknown",
-          time: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently",
+          // FIX: Use item.address (from your DB) so it doesn't show "Unknown"
+          location: item.address || "No Location", 
+          time: item.created_at ? new Date(item.created_at).toLocaleDateString() : "Recently",
           category: item.category?.name || "General", 
           condition: item.condition ? item.condition.replace(/_/g, " ") : "Good",
-          image: item.images?.[0]?.url || "https://images.unsplash.com/photo-1532622722190-68a516930ee0?w=400",
+          // FIX: Check for the images array correctly
+          image: item.images && item.images.length > 0 
+            ? item.images[0].imageUrl 
+            : "https://images.unsplash.com/photo-1532622722190-68a516930ee0?w=400",
         }));
 
         setDonations(mappedItems);
@@ -69,7 +67,6 @@ export default function Browse() {
 
   const filteredItems = donations.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-    // Normalize strings for comparison to avoid "No items found" due to casing
     const matchesCategory = 
       selectedCategory === "All" || 
       item.category.toLowerCase() === selectedCategory.toLowerCase();
@@ -97,17 +94,15 @@ export default function Browse() {
         ) : error ? (
           <div className="text-center py-20 text-red-500">{error}</div>
         ) : filteredItems.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">
-            No items found matching "{selectedCategory}"
-          </div>
+          <div className="text-center py-20 text-gray-500">No items found.</div>
         ) : (
           <>
             <DonationGrid items={currentItems} />
             {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-8">
-                <button onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1} className="p-2 border rounded disabled:opacity-30"><ChevronLeft /></button>
+              <div className="flex justify-center items-center gap-4 mt-8">
+                <button onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1} className="p-2 border rounded hover:bg-gray-100 disabled:opacity-30"><ChevronLeft /></button>
                 <span className="font-bold">{currentPage} / {totalPages}</span>
-                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages} className="p-2 border rounded disabled:opacity-30"><ChevronRight /></button>
+                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages} className="p-2 border rounded hover:bg-gray-100 disabled:opacity-30"><ChevronRight /></button>
               </div>
             )}
           </>
