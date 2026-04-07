@@ -44,19 +44,20 @@ export default function Browse() {
         const donData = await donRes.json();
         const items = Array.isArray(donData) ? donData : donData.content || [];
 
-        // Map backend donation data to frontend DonationItem
-        const mappedItems = items.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          location: item.address || "No Location",
-          time: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently",
-          category: item.category?.name || "General",
-          condition: item.condition ? item.condition.replace(/_/g, " ") : "Good",
-          image:
-            item.imageUrls && item.imageUrls.length > 0
-              ? item.imageUrls[0]
-              : "https://via.placeholder.com/400?text=No+Image",
-        }));
+      // Inside your Browse.tsx fetchData function:
+const mappedItems = items.map((item: any) => ({
+  id: item.id,
+  title: item.title,
+  // Fix: Your DB screenshot shows the column is named "address"
+  location: item.address || "No Location", 
+  time: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently",
+  category: item.category?.name || "General",
+  condition: item.condition ? item.condition.replace(/_/g, " ") : "Good",
+  // Fix: Backend returns a list of imageUrls
+  image: item.imageUrls && item.imageUrls.length > 0
+    ? item.imageUrls[0]
+    : "https://via.placeholder.com/400?text=No+Image",
+}));
 
         setDonations(mappedItems);
       } catch (err: any) {

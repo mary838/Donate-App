@@ -3,7 +3,7 @@ export const uploadImageToCloudinary = async (file: File) => {
   
   // These match your screenshot exactly
   formData.append("file", file);
-  formData.append("upload_preset", "ml_default"); 
+  formData.append("upload_preset", "Mary_default"); 
 
   try {
     const res = await fetch(
