@@ -7,7 +7,7 @@ import DonationGrid from "../components/DonationGrid";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { DonationItem } from "../components/DonationCard";
 
-const BASE_URL = "https://material-donation-backend-3.onrender.com";
+const BASE_URL = "https://material-donation-backend-4.onrender.com";
 const ITEMS_PER_PAGE = 10;
 
 export default function Browse() {
@@ -29,30 +29,33 @@ export default function Browse() {
       setIsLoading(true);
       setError(null);
       try {
+        // Fetch categories and donations in parallel
         const [catRes, donRes] = await Promise.all([
           fetch(`${BASE_URL}/api/categories`, { headers: getAuthHeader() as any }),
-          fetch(`${BASE_URL}/api/v1/donations`, { headers: getAuthHeader() as any })
+          fetch(`${BASE_URL}/api/v1/donations`, { headers: getAuthHeader() as any }),
         ]);
 
+        // Categories
         const catData = await catRes.json();
-        setCategories(Array.isArray(catData) ? catData : (catData.content || []));
+        setCategories(Array.isArray(catData) ? catData : catData.content || []);
 
+        // Donations
         if (!donRes.ok) throw new Error("Failed to fetch donations");
         const donData = await donRes.json();
-        const items = Array.isArray(donData) ? donData : (donData.content || []);
+        const items = Array.isArray(donData) ? donData : donData.content || [];
 
+        // Map backend donation data to frontend DonationItem
         const mappedItems = items.map((item: any) => ({
           id: item.id,
           title: item.title,
-          // FIX: Use item.address (from your DB) so it doesn't show "Unknown"
-          location: item.address || "No Location", 
-          time: item.created_at ? new Date(item.created_at).toLocaleDateString() : "Recently",
-          category: item.category?.name || "General", 
+          location: item.address || "No Location",
+          time: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently",
+          category: item.category?.name || "General",
           condition: item.condition ? item.condition.replace(/_/g, " ") : "Good",
-          // FIX: Check for the images array correctly
-          image: item.images && item.images.length > 0 
-            ? item.images[0].imageUrl 
-            : "https://images.unsplash.com/photo-1532622722190-68a516930ee0?w=400",
+          image:
+            item.imageUrls && item.imageUrls.length > 0
+              ? item.imageUrls[0]
+              : "https://via.placeholder.com/400?text=No+Image",
         }));
 
         setDonations(mappedItems);
@@ -62,23 +65,28 @@ export default function Browse() {
         setIsLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
+  // Filter donations by search term and selected category
   const filteredItems = donations.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = 
-      selectedCategory === "All" || 
-      item.category.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesCategory =
+      selectedCategory === "All" || item.category.toLowerCase() === selectedCategory.toLowerCase();
     return matchesSearch && matchesCategory;
   });
 
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
-  const currentItems = filteredItems.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const currentItems = filteredItems.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 text-black">
       <main className="max-w-7xl mx-auto px-4 py-12">
+        {/* Search and Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-12 max-w-4xl mx-auto">
           <SearchBar value={searchTerm} onChange={setSearchTerm} />
           <CategoryFilter
@@ -89,20 +97,40 @@ export default function Browse() {
           />
         </div>
 
+        {/* Loading, Error, or Empty States */}
         {isLoading ? (
-          <div className="flex justify-center py-20"><Loader2 className="animate-spin text-green-600" /></div>
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin text-green-600" size={40} />
+          </div>
         ) : error ? (
-          <div className="text-center py-20 text-red-500">{error}</div>
+          <div className="text-center py-20 text-red-500 font-medium">{error}</div>
         ) : filteredItems.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">No items found.</div>
+          <div className="text-center py-20 text-gray-500 font-medium">No items found.</div>
         ) : (
           <>
+            {/* Donation Grid */}
             <DonationGrid items={currentItems} />
+
+            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-8">
-                <button onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1} className="p-2 border rounded hover:bg-gray-100 disabled:opacity-30"><ChevronLeft /></button>
-                <span className="font-bold">{currentPage} / {totalPages}</span>
-                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages} className="p-2 border rounded hover:bg-gray-100 disabled:opacity-30"><ChevronRight /></button>
+              <div className="flex justify-center items-center gap-4 mt-12">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 border rounded hover:bg-gray-100 disabled:opacity-30 transition-all"
+                >
+                  <ChevronLeft />
+                </button>
+                <span className="font-bold text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 border rounded hover:bg-gray-100 disabled:opacity-30 transition-all"
+                >
+                  <ChevronRight />
+                </button>
               </div>
             )}
           </>
