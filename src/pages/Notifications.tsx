@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Check, X, Clock, Bell, Loader2, AlertCircle, RefreshCw } from "lucide-react";
@@ -7,7 +9,7 @@ interface Notification {
   message: string;
   senderId: string;
   createdAt: string;
-  type?: string;
+  type?: "request" | "approval" | "rejection" | string;
 }
 
 interface NotificationsPageProps {
@@ -24,29 +26,24 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ userId }) => {
 
   const fetchNotifications = async () => {
     if (!userId) return;
+    const token = localStorage.getItem("token");
     
     try {
       setLoading(true);
       setError(null);
       
-      // Adding a timeout check (Render can be slow)
-      const response = await fetch(`${BASE_URL}/user/${userId}`);
+      const response = await fetch(`${BASE_URL}/user/${userId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
       const data = await response.json();
-      console.log("API Success:", data); // Check your console!
       setNotifications(Array.isArray(data) ? data : []); 
-      
-    } catch (err) {
-      console.error("API Error:", err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to connect to server.");
-      }
+    } catch (err: any) {
+      setError(err.message || "Failed to connect to server.");
     } finally {
       setLoading(false);
     }
@@ -56,44 +53,47 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ userId }) => {
     fetchNotifications();
   }, [userId]);
 
-  const handleAction = async (targetUserId: string, actionType: string) => {
+  const handleAction = async (notificationId: string, targetUserId: string, actionType: string) => {
+    const token = localStorage.getItem("token");
     try {
       const response = await fetch(`${BASE_URL}/send/${targetUserId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
-          message: `Your request was ${actionType}`,
+          message: `Update: Your request has been ${actionType}.`,
           type: actionType,
           senderId: userId
         }),
       });
+
       if (response.ok) {
-        alert(`Notification sent: ${actionType}`);
+        // Remove the notification locally so it disappears after action
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        alert(`Success: Request ${actionType}`);
       }
     } catch (err) {
       console.error("Error sending notification:", err);
+      alert("Failed to process action.");
     }
   };
 
-  // 1. LOADING STATE
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4">
       <Loader2 className="animate-spin text-[#2DBB74]" size={40} />
-      <p className="text-gray-500 animate-pulse font-medium">Waking up server...</p>
+      <p className="text-gray-500 font-medium">Loading notifications...</p>
     </div>
   );
 
-  // 2. ERROR STATE (Prevents infinite loading)
   if (error) return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <AlertCircle className="text-red-500 mb-2" size={48} />
-      <h2 className="text-xl font-bold text-gray-800">Connection Error</h2>
-      <p className="text-gray-500 text-center mb-6">{error}</p>
-      <button 
-        onClick={fetchNotifications}
-        className="flex items-center gap-2 bg-[#2DBB74] text-white px-6 py-2 rounded-xl font-bold hover:bg-[#259e62] transition"
-      >
-        <RefreshCw size={18} /> Retry Connection
+      <h2 className="text-xl font-bold">Connection Error</h2>
+      <p className="text-gray-500 mb-6">{error}</p>
+      <button onClick={fetchNotifications} className="flex items-center gap-2 bg-[#2DBB74] text-white px-6 py-2 rounded-xl">
+        <RefreshCw size={18} /> Retry
       </button>
     </div>
   );
@@ -102,57 +102,53 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ userId }) => {
     <div className="min-h-screen bg-[#F9FAFB] py-12 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-900">{t("notifications.title")}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
           <div className="flex items-center justify-center gap-2 mt-2">
-            <span className="bg-red-100 text-red-500 text-[10px] font-bold px-2 py-0.5 rounded-md">
-              {notifications.length} {t("notifications.unreadCount")}
+            <span className="bg-green-100 text-green-600 text-xs font-bold px-3 py-1 rounded-full">
+              {notifications.length} Active
             </span>
           </div>
         </div>
 
-        <div className="mb-10">
-          <div className="flex items-center gap-2 mb-5">
-            <Clock className="text-orange-500" size={18} />
-            <h2 className="font-bold text-gray-800">{t("notifications.pendingTitle")}</h2>
-          </div>
-
-          <div className="space-y-4">
-            {notifications.length === 0 ? (
-              <div className="text-center bg-white border border-dashed border-gray-300 rounded-2xl py-12">
-                <p className="text-gray-400 italic">No notifications found for this user.</p>
-              </div>
-            ) : (
-              notifications.map((notif) => (
-                <div key={notif.id} className="bg-white border border-gray-100 rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-5 shadow-sm">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Bell className="text-gray-400" />
-                  </div>
-                  
-                  <div className="flex-grow text-center sm:text-left">
-                    <p className="text-sm text-gray-800 font-medium">{notif.message}</p>
-                    <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase">
-                      {notif.createdAt ? new Date(notif.createdAt).toLocaleString() : "Just now"}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => handleAction(notif.senderId, "approved")}
-                      className="bg-[#2DBB74] text-white p-2 rounded-lg hover:bg-[#259e62]"
-                    >
-                      <Check size={16} />
-                    </button>
-                    <button 
-                      onClick={() => handleAction(notif.senderId, "rejected")}
-                      className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
+        <div className="space-y-4">
+          {notifications.length === 0 ? (
+            <div className="text-center bg-white border border-dashed border-gray-300 rounded-2xl py-12">
+              <p className="text-gray-400 italic">No new notifications.</p>
+            </div>
+          ) : (
+            notifications.map((notif) => (
+              <div key={notif.id} className="bg-white border border-gray-100 rounded-2xl p-5 flex items-center gap-5 shadow-sm">
+                <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center shrink-0">
+                  <Bell className="text-green-500" size={20} />
                 </div>
-              ))
-            )}
-          </div>
+                
+                <div className="flex-grow">
+                  <p className="text-sm text-gray-800 font-medium">{notif.message}</p>
+                  <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold">
+                    {notif.createdAt ? new Date(notif.createdAt).toLocaleTimeString() : "Recent"}
+                  </p>
+                </div>
+
+                {/* Only show buttons if this is a "request" type notification */}
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => handleAction(notif.id, notif.senderId, "approved")}
+                    className="bg-[#2DBB74] text-white p-2 rounded-lg hover:bg-[#259e62] transition"
+                    title="Approve"
+                  >
+                    <Check size={18} />
+                  </button>
+                  <button 
+                    onClick={() => handleAction(notif.id, notif.senderId, "rejected")}
+                    className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition"
+                    title="Reject"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

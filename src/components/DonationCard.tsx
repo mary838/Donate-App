@@ -4,7 +4,7 @@ import { useState } from "react";
 import { MapPin, Clock, Loader2, CheckCircle } from "lucide-react";
 
 export interface DonationItem {
-  id: string; // Changed to string/UUID to match your backend
+  id: string;
   title: string;
   location: string;
   time: string;
@@ -38,7 +38,7 @@ export default function DonationCard({ item }: Props) {
         },
         body: JSON.stringify({
           donationId: item.id,
-          message: "I am interested in this item. Thank you!" // You can make this a textarea later
+          message: `I am interested in "${item.title}". Thank you!`
         }),
       });
 
@@ -48,6 +48,7 @@ export default function DonationCard({ item }: Props) {
       }
 
       setIsRequested(true);
+      alert("Request sent successfully! The donor will be notified.");
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -65,23 +66,17 @@ export default function DonationCard({ item }: Props) {
         />
       </div>
       <div className="p-5 flex flex-col flex-grow">
-        <h3 className="text-md font-semibold text-gray-900 mb-2">
-          {item.title}
-        </h3>
+        <h3 className="text-md font-semibold text-gray-900 mb-2">{item.title}</h3>
         <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
           <span className="flex items-center gap-1">
-            <MapPin className="h-3.5 w-3.5" />
-            {item.location}
+            <MapPin className="h-3.5 w-3.5" /> {item.location}
           </span>
           <span className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
-            {item.time}
+            <Clock className="h-3.5 w-3.5" /> {item.time}
           </span>
         </div>
         <div className="flex gap-2 mb-4">
-          <span className="px-3 py-1 bg-gray-100 text-xs rounded-full">
-            {item.category}
-          </span>
+          <span className="px-3 py-1 bg-gray-100 text-xs rounded-full">{item.category}</span>
           <span className={`px-3 py-1 text-xs rounded-full ${
             item.condition === "Like New" ? "bg-orange-100 text-orange-800" : "bg-amber-100 text-amber-800"
           }`}>
@@ -101,9 +96,7 @@ export default function DonationCard({ item }: Props) {
           {isSubmitting ? (
             <Loader2 className="animate-spin h-4 w-4" />
           ) : isRequested ? (
-            <>
-              <CheckCircle size={16} /> Requested
-            </>
+            <><CheckCircle size={16} /> Requested</>
           ) : (
             "Request Item"
           )}
