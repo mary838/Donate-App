@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import SearchBar from "../components/SearchBar";
 import CategoryFilter from "../components/CategoryFilter";
 import DonationGrid from "../components/DonationGrid";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { DonationItem } from "../components/DonationCard";
 
-const BASE_URL = "https://material-donation-backend-4.onrender.com";
+const BASE_URL = "https://material-donation-backend-5.onrender.com";
 const ITEMS_PER_PAGE = 10;
 
 export default function Browse() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("All"); 
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null); 
   const [donations, setDonations] = useState<DonationItem[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,63 +25,80 @@ export default function Browse() {
     return token ? { "Authorization": `Bearer ${token}` } : {};
   };
 
+  // Fetch categories once
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
+    const fetchCategories = async () => {
       try {
-        // Fetch categories and donations in parallel
-        const [catRes, donRes] = await Promise.all([
-          fetch(`${BASE_URL}/api/categories`, { headers: getAuthHeader() as any }),
-          fetch(`${BASE_URL}/api/v1/donations`, { headers: getAuthHeader() as any }),
-        ]);
-
-        // Categories
-        const catData = await catRes.json();
-        setCategories(Array.isArray(catData) ? catData : catData.content || []);
-
-        // Donations
-        if (!donRes.ok) throw new Error("Failed to fetch donations");
-        const donData = await donRes.json();
-        const items = Array.isArray(donData) ? donData : donData.content || [];
-
-      // Inside your Browse.tsx fetchData function:
-const mappedItems = items.map((item: any) => ({
-  id: item.id,
-  title: item.title,
-  // Fix: Your DB screenshot shows the column is named "address"
-  location: item.address || "No Location", 
-  time: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently",
-  category: item.category?.name || "General",
-  condition: item.condition ? item.condition.replace(/_/g, " ") : "Good",
-  // Fix: Backend returns a list of imageUrls
-  image: item.imageUrls && item.imageUrls.length > 0
-    ? item.imageUrls[0]
-    : "https://via.placeholder.com/400?text=No+Image",
-}));
-
-        setDonations(mappedItems);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
+        const res = await fetch(`${BASE_URL}/api/categories`, { headers: getAuthHeader() as any });
+        const data = await res.json();
+        setCategories(Array.isArray(data) ? data : data.content || []);
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
       }
     };
-
-    fetchData();
+    fetchCategories();
   }, []);
 
- // Find this section in your Browse.tsx and replace it:
-const filteredItems = donations.filter((item) => {
-  const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-  
-  // FIXED: Ensure we are comparing the category name correctly
-  const matchesCategory =
-    selectedCategory === "All" || 
-    item.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
+  // Fetch Donations whenever the categoryId changes
+  const fetchDonations = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Construction of filtered URL
+      let url = `${BASE_URL}/api/v1/donations`;
+      if (selectedCategoryId && selectedCategoryId !== "") {
+        url = `${BASE_URL}/api/v1/donations?categoryId=${selectedCategoryId}`;
+      }
+
+      const res = await fetch(url, { headers: getAuthHeader() as any });
+      if (!res.ok) throw new Error("Failed to fetch donations");
+      
+      const donData = await res.json();
+      const items = Array.isArray(donData) ? donData : donData.content || [];
+
+      const mappedItems = items.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        location: item.address || "No Location", 
+        time: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently",
+        category: item.categoryName || item.category?.name || "General",
+        condition: item.condition ? item.condition.replace(/_/g, " ") : "Good",
+        image: item.imageUrls && item.imageUrls.length > 0
+          ? item.imageUrls[0]
+          : "https://via.placeholder.com/400?text=No+Image",
+      }));
+
+      setDonations(mappedItems);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedCategoryId]);
+
+  useEffect(() => {
+    fetchDonations();
+  }, [fetchDonations]);
+
+  // Handle Category Change - This triggers the fetchDonations via the dependency array
+  const handleCategoryChange = (categoryName: string) => {
+    setSelectedCategory(categoryName);
+    setCurrentPage(1); // Reset to first page on new filter
     
-  return matchesSearch && matchesCategory;
-});
+    if (categoryName === "All") {
+      setSelectedCategoryId(null);
+    } else {
+      const found = categories.find(c => c.name === categoryName);
+      if (found) {
+        setSelectedCategoryId(found.id);
+      }
+    }
+  };
+
+  // Search filter (on top of category results)
+  const filteredItems = donations.filter((item) =>
+    item.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
   const currentItems = filteredItems.slice(
@@ -91,18 +109,16 @@ const filteredItems = donations.filter((item) => {
   return (
     <div className="min-h-screen bg-gray-50 text-black">
       <main className="max-w-7xl mx-auto px-4 py-12">
-        {/* Search and Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-12 max-w-4xl mx-auto">
           <SearchBar value={searchTerm} onChange={setSearchTerm} />
           <CategoryFilter
             categories={categories}
             value={selectedCategory}
-            onChange={setSelectedCategory}
+            onChange={handleCategoryChange}
             isLoading={isLoading}
           />
         </div>
 
-        {/* Loading, Error, or Empty States */}
         {isLoading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="animate-spin text-green-600" size={40} />
@@ -110,13 +126,10 @@ const filteredItems = donations.filter((item) => {
         ) : error ? (
           <div className="text-center py-20 text-red-500 font-medium">{error}</div>
         ) : filteredItems.length === 0 ? (
-          <div className="text-center py-20 text-gray-500 font-medium">No items found.</div>
+          <div className="text-center py-20 text-gray-500 font-medium">No items found for this selection.</div>
         ) : (
           <>
-            {/* Donation Grid */}
             <DonationGrid items={currentItems} />
-
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-12">
                 <button
