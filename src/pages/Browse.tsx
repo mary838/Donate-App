@@ -7,7 +7,8 @@ import DonationGrid from "../components/DonationGrid";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { DonationItem } from "../components/DonationCard";
 
-const BASE_URL = "https://material-donation-backend-5.onrender.com";
+// Unified to backend-6 based on your provided links
+const BASE_URL = "https://material-donation-backend-6.onrender.com";
 const ITEMS_PER_PAGE = 10;
 
 export default function Browse() {
@@ -25,7 +26,6 @@ export default function Browse() {
     return token ? { "Authorization": `Bearer ${token}` } : {};
   };
 
-  // Fetch categories once
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -39,15 +39,14 @@ export default function Browse() {
     fetchCategories();
   }, []);
 
-  // Fetch Donations whenever the categoryId changes
   const fetchDonations = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Construction of filtered URL
       let url = `${BASE_URL}/api/v1/donations`;
-      if (selectedCategoryId && selectedCategoryId !== "") {
-        url = `${BASE_URL}/api/v1/donations?categoryId=${selectedCategoryId}`;
+      // Use URLSearchParams for cleaner URL building
+      if (selectedCategoryId) {
+        url += `?categoryId=${selectedCategoryId}`;
       }
 
       const res = await fetch(url, { headers: getAuthHeader() as any });
@@ -80,22 +79,18 @@ export default function Browse() {
     fetchDonations();
   }, [fetchDonations]);
 
-  // Handle Category Change - This triggers the fetchDonations via the dependency array
   const handleCategoryChange = (categoryName: string) => {
     setSelectedCategory(categoryName);
-    setCurrentPage(1); // Reset to first page on new filter
+    setCurrentPage(1);
     
     if (categoryName === "All") {
       setSelectedCategoryId(null);
     } else {
       const found = categories.find(c => c.name === categoryName);
-      if (found) {
-        setSelectedCategoryId(found.id);
-      }
+      setSelectedCategoryId(found ? found.id : null);
     }
   };
 
-  // Search filter (on top of category results)
   const filteredItems = donations.filter((item) =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -126,7 +121,7 @@ export default function Browse() {
         ) : error ? (
           <div className="text-center py-20 text-red-500 font-medium">{error}</div>
         ) : filteredItems.length === 0 ? (
-          <div className="text-center py-20 text-gray-500 font-medium">No items found for this selection.</div>
+          <div className="text-center py-20 text-gray-500 font-medium">No items found.</div>
         ) : (
           <>
             <DonationGrid items={currentItems} />
@@ -135,17 +130,15 @@ export default function Browse() {
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="p-2 border rounded hover:bg-gray-100 disabled:opacity-30 transition-all"
+                  className="p-2 border rounded hover:bg-gray-100 disabled:opacity-30"
                 >
                   <ChevronLeft />
                 </button>
-                <span className="font-bold text-sm">
-                  Page {currentPage} of {totalPages}
-                </span>
+                <span className="font-bold text-sm">Page {currentPage} of {totalPages}</span>
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="p-2 border rounded hover:bg-gray-100 disabled:opacity-30 transition-all"
+                  className="p-2 border rounded hover:bg-gray-100 disabled:opacity-30"
                 >
                   <ChevronRight />
                 </button>

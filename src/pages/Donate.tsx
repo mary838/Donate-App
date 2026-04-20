@@ -6,18 +6,14 @@ import { useNavigate } from "react-router-dom";
 
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dml6kygxk/image/upload";
 const UPLOAD_PRESET = "Mary_default";
-const BACKEND_URL = "https://material-donation-backend-4.onrender.com";
+const BACKEND_URL = "https://material-donation-backend-6.onrender.com";
 
 async function uploadImageToCloudinary(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", UPLOAD_PRESET);
 
-  const res = await fetch(CLOUDINARY_URL, {
-    method: "POST",
-    body: formData,
-  });
-
+  const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || "Cloudinary Upload Failed");
   return data.secure_url;
@@ -28,10 +24,8 @@ export default function Donate() {
   const [categories, setCategories] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
-
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -47,9 +41,7 @@ export default function Donate() {
   };
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/categories`, {
-      headers: getAuthHeader() as any,
-    })
+    fetch(`${BACKEND_URL}/api/categories`, { headers: getAuthHeader() as any })
       .then((res) => res.json())
       .then((data) => setCategories(Array.isArray(data) ? data : data.content || []))
       .catch((err) => console.error("Category Load Error:", err));
@@ -57,40 +49,30 @@ export default function Donate() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.categoryId) return setStatus({ type: "error", text: "Please select a category" });
-    if (!imageFile) return setStatus({ type: "error", text: "Please upload an image" });
+    if (!formData.categoryId || !imageFile) {
+      return setStatus({ type: "error", text: "Please complete all fields and upload an image" });
+    }
 
     setIsSubmitting(true);
     setStatus(null);
 
     try {
-      // 1. Upload to Cloudinary
       const imageUrl = await uploadImageToCloudinary(imageFile);
 
-      // 2. Create the Donation
       const res = await fetch(`${BACKEND_URL}/api/v1/donations`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          ...getAuthHeader() as any 
-        },
-        body: JSON.stringify({
-          ...formData,
-          quantity: Number(formData.quantity),
-        }),
+        headers: { "Content-Type": "application/json", ...getAuthHeader() as any },
+        body: JSON.stringify({ ...formData, quantity: Number(formData.quantity) }),
       });
 
       if (!res.ok) throw new Error("Failed to create donation");
       const donation = await res.json();
 
-      // 3. Attach image URL to the created donation
+      // Fix: Ensure the query parameter for imageUrl is properly encoded
       if (imageUrl && donation.id) {
         await fetch(
           `${BACKEND_URL}/api/v1/donations/${donation.id}/images?imageUrl=${encodeURIComponent(imageUrl)}`,
-          {
-            method: "POST",
-            headers: getAuthHeader() as any,
-          }
+          { method: "POST", headers: getAuthHeader() as any }
         );
       }
 
@@ -116,7 +98,7 @@ export default function Donate() {
 
         <div className="space-y-2">
           {!preview ? (
-            <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+            <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
               <Camera className="w-10 h-10 text-gray-400 mb-2" />
               <p className="text-sm text-gray-500 font-semibold">Click to upload photo</p>
               <input type="file" className="hidden" accept="image/*" onChange={(e) => {
