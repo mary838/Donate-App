@@ -1,63 +1,66 @@
-"use client";
+import React from 'react';
+// If using Lucide or FontAwesome for icons, import them here. 
+// Otherwise, we use standard emojis/SVG to match the design.
 
-import { MapPin, Clock } from "lucide-react";
-
-export interface DonationItem {
-  id: number;
+interface DonationItem {
+  id: string;
   title: string;
   location: string;
-  time: string;
+  timeAgo: string;
   category: string;
-  condition: string;
-  image: string;
+  imageUrl: string;
 }
 
-interface Props {
+interface DonationCardProps {
   item: DonationItem;
 }
 
-export default function DonationCard({ item }: Props) {
+const DonationCard: React.FC<DonationCardProps> = ({ item }) => {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
-      <div className="h-56 w-full bg-gray-100">
-        <img
-          src={item.image}
-          alt={item.title}
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+      {/* 1. Image Section */}
+      <div className="h-48 w-full bg-gray-100">
+        <img 
+          src={item.imageUrl} 
+          alt={item.title} 
           className="w-full h-full object-cover"
         />
       </div>
-      <div className="p-5 flex flex-col flex-grow">
-        <h3 className="text-md font-semibold text-gray-900 mb-2">
+
+      {/* 2. Content Section */}
+      <div className="p-4 flex flex-col gap-3">
+        {/* Title */}
+        <h3 className="text-gray-800 font-bold text-lg leading-tight">
           {item.title}
         </h3>
-        <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
-          <span className="flex items-center gap-1">
-            <MapPin className="h-3.5 w-3.5" />
-            {item.location}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
-            {item.time}
-          </span>
+
+        {/* Location and Time (Metadata Row) */}
+        <div className="flex items-center justify-between text-gray-500 text-xs">
+          <div className="flex items-center gap-1">
+            <span>📍</span> <span>{item.location}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span>🕒</span> <span>{item.timeAgo}</span>
+          </div>
         </div>
-        <div className="flex gap-2 mb-4">
-          <span className="px-3 py-1 bg-gray-100 text-xs rounded-full">
+
+        {/* Category Tag and View Details Link */}
+        <div className="flex items-center justify-between mt-1">
+          <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
             {item.category}
           </span>
-          <span
-            className={`px-3 py-1 text-xs rounded-full ${
-              item.condition === "Like New"
-                ? "bg-orange-100 text-orange-800"
-                : "bg-amber-100 text-amber-800"
-            }`}
-          >
-            {item.condition}
-          </span>
+          <button className="text-orange-500 bg-orange-50 px-3 py-1 rounded text-xs font-semibold hover:bg-orange-100 transition-colors">
+            View Details
+          </button>
         </div>
-        <button className="mt-auto w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded-md">
+
+        {/* Primary Action Button */}
+        <button className="w-full mt-2 py-2.5 border-2 border-orange-200 text-orange-700 text-sm font-bold rounded-md hover:bg-orange-50 transition-all active:scale-[0.98]">
           Request Item
         </button>
       </div>
     </div>
   );
-}
+};
+
+export default DonationCard;
