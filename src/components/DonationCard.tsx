@@ -61,7 +61,7 @@ const DonationCard = ({ item, onOpenRequest }: { item: any; onOpenRequest: (id: 
   onClick={() => onOpenRequest(item.id)} // This now triggers the Detail Modal in Browse.tsx
   className="text-orange-500 bg-orange-50 px-1 py-3 rounded text-xs font-semibold hover:bg-orange-100 transition-colors"
 >
-  View Details
+  Read More
 </button>
       </div>
     
