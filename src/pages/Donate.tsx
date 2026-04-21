@@ -4,10 +4,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import { MapPin, Loader2, CheckCircle2, AlertCircle, Camera, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+// Configuration
 const BASE_URL = "http://localhost:8080";
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dml6kygxk/image/upload";
 const UPLOAD_PRESET = "Mary_default";
 
+// Types
 interface Category {
   id: string;
   name: string;
@@ -46,20 +48,27 @@ export default function Donate() {
     quantity: 1,
   });
 
+  // Fixed Header Logic to include Token and correct Content-Type
   const getHeaders = useCallback((contentType: string = "application/json") => {
     const token = localStorage.getItem("token");
     const headers: HeadersInit = {};
     if (contentType !== "none") headers["Content-Type"] = contentType;
-    if (token) headers["Authorization"] = `Bearer ${token}`; // Fixes the 403 Forbidden error
+    if (token) headers["Authorization"] = `Bearer ${token}`;
     return headers;
   }, []);
 
+  // FETCH CATEGORIES: Fixed path to use BASE_URL and headers to avoid 403
   useEffect(() => {
     const fetchCats = async () => {
       try {
-        const res = await fetch(`${BASE_URL}/api/categories`, { headers: getHeaders() });
-        if (!res.ok) throw new Error(`Category API Error: ${res.status}`);
+        const res = await fetch(`${BASE_URL}/api/categories`, { 
+          headers: getHeaders() 
+        });
+        
+        if (!res.ok) throw new Error(`Category Fetch Error: ${res.status}`);
+        
         const data = await res.json();
+        // Backend returns direct array or {content: []}
         const finalData = Array.isArray(data) ? data : (data.content || []);
         setCategories(finalData);
       } catch (err) {
@@ -78,23 +87,34 @@ export default function Donate() {
     setStatus(null);
 
     try {
+      // 1. Upload to Cloudinary
       const imageUrl = await uploadImageToCloudinary(imageFile);
 
+      // 2. Create Donation Record (Fixed URL)
       const donationRes = await fetch(`${BASE_URL}/api/v1/donations`, {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify({ ...formData, quantity: Number(formData.quantity) }),
+        body: JSON.stringify({ 
+          ...formData, 
+          quantity: Number(formData.quantity) 
+        }),
       });
+      
       if (!donationRes.ok) throw new Error("Donation creation failed");
       const donation: DonationResponse = await donationRes.json();
 
+      // 3. Link Image via Query Param (Fixed URL)
       const linkRes = await fetch(
         `${BASE_URL}/api/v1/donations/${donation.id}/images?imageUrl=${encodeURIComponent(imageUrl)}`,
-        { method: "POST", headers: getHeaders() }
+        { 
+          method: "POST", 
+          headers: getHeaders("none") // No body needed for param-based POST
+        }
       );
-      if (!linkRes.ok) throw new Error("Image linking failed");
+      
+      if (!linkRes.ok) throw new Error("Failed to link image to donation");
 
-      setStatus({ type: "success", text: "Success! Redirecting..." });
+      setStatus({ type: "success", text: "Success! Item listed." });
       setTimeout(() => navigate("/browse"), 2000);
     } catch (err: any) {
       setStatus({ type: "error", text: err.message });
@@ -114,6 +134,7 @@ export default function Donate() {
           </div>
         )}
 
+        {/* Image Preview Area */}
         <div className="space-y-2">
           {!preview ? (
             <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
@@ -132,6 +153,7 @@ export default function Donate() {
           )}
         </div>
 
+        {/* Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input placeholder="Title" className="p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
           <select className="p-3 border rounded-lg bg-white focus:ring-2 focus:ring-green-500 outline-none" required value={formData.categoryId} onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}>
@@ -159,7 +181,7 @@ export default function Donate() {
         <textarea placeholder="Description" className="p-3 border rounded-lg w-full h-32 focus:ring-2 focus:ring-green-500 outline-none resize-none" required value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
 
         <button type="submit" disabled={isSubmitting} className="w-full bg-green-600 text-white py-4 rounded-lg font-bold hover:bg-green-700 disabled:bg-gray-400 transition-all flex justify-center items-center gap-2">
-          {isSubmitting ? <><Loader2 className="animate-spin" size={20} /> Sending...</> : "List Item Now"}
+          {isSubmitting ? <><Loader2 className="animate-spin" size={20} /> Processing...</> : "Submit Item"}
         </button>
       </form>
     </div>
