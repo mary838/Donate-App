@@ -4,7 +4,10 @@ import React, { useState, useEffect } from "react";
 import { MapPin, Loader2, CheckCircle2, AlertCircle, Camera, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Cloudinary Configuration from your successful tests
+// Accessing the environment variable
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+// Cloudinary Configuration
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dml6kygxk/image/upload";
 const UPLOAD_PRESET = "Mary_default";
 
@@ -36,7 +39,7 @@ export default function Donate() {
     title: "",
     description: "",
     categoryId: "",
-   condition: "",
+    condition: "",
     address: "",
     quantity: 1,
   });
@@ -47,7 +50,8 @@ export default function Donate() {
   };
 
   useEffect(() => {
-    fetch("https://material-donation-backend-8.onrender.com/api/categories", {
+    // 1️⃣ Using Localhost via ENV
+    fetch(`${API_BASE_URL}/api/categories`, {
       headers: getAuthHeader() as any,
     })
       .then((res) => res.json())
@@ -64,11 +68,10 @@ export default function Donate() {
     setStatus(null);
 
     try {
-      // 1️⃣ Upload image
       const imageUrl = await uploadImageToCloudinary(imageFile);
 
-      // 2️⃣ Create donation
-      const res = await fetch("https://material-donation-backend-8.onrender.com/api/v1/donations", {
+      // 2️⃣ Using Localhost via ENV
+      const res = await fetch(`${API_BASE_URL}/api/v1/donations`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -83,10 +86,10 @@ export default function Donate() {
       if (!res.ok) throw new Error("Failed to create donation");
       const donation = await res.json();
 
-      // 3️⃣ Link image to donation record
+      // 3️⃣ Using Localhost via ENV
       if (imageUrl && donation.id) {
         await fetch(
-          `https://material-donation-backend-8.onrender.com/api/v1/donations/${donation.id}/images?imageUrl=${encodeURIComponent(imageUrl)}`,
+          `${API_BASE_URL}/api/v1/donations/${donation.id}/images?imageUrl=${encodeURIComponent(imageUrl)}`,
           {
             method: "POST",
             headers: getAuthHeader() as any,
