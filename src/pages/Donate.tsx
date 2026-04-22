@@ -119,6 +119,7 @@ export default function Donate() {
       <form onSubmit={handleSubmit} className="w-full max-w-2xl bg-white p-8 rounded-xl shadow-lg border border-gray-100 space-y-6">
         <h1 className="text-2xl font-bold">List an Item</h1>
 
+
         {status && (
           <div className={`p-4 rounded-lg flex items-center gap-2 ${status.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
             {status.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
