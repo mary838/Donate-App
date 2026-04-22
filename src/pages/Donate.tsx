@@ -4,9 +4,6 @@ import React, { useState, useEffect } from "react";
 import { MapPin, Loader2, CheckCircle2, AlertCircle, Camera, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Accessing the environment variable
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-
 // Cloudinary Configuration
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dml6kygxk/image/upload";
 const UPLOAD_PRESET = "Mary_default";
@@ -46,17 +43,31 @@ export default function Donate() {
 
   const getAuthHeader = () => {
     const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    return token ? { "Authorization": `Bearer ${token}` } : {};
   };
 
+  // FIXED: Safer Fetch logic
   useEffect(() => {
-    // 1️⃣ Using Localhost via ENV
-    fetch(`${API_BASE_URL}/api/categories`, {
-      headers: getAuthHeader() as any,
-    })
-      .then((res) => res.json())
-      .then((data) => setCategories(Array.isArray(data) ? data : data.content || []))
-      .catch((err) => console.error("Category Load Error:", err));
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("https://material-donation-backend-8.onrender.com/api/categories", {
+          headers: getAuthHeader() as any,
+        });
+
+        // This prevents the "Unexpected end of JSON input" error
+        if (!res.ok) {
+          console.error(`Failed to fetch categories: ${res.status}`);
+          return;
+        }
+
+        const data = await res.json();
+        setCategories(Array.isArray(data) ? data : data.content || []);
+      } catch (err) {
+        console.error("Category Load Error:", err);
+      }
+    };
+
+    fetchCategories();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,8 +81,7 @@ export default function Donate() {
     try {
       const imageUrl = await uploadImageToCloudinary(imageFile);
 
-      // 2️⃣ Using Localhost via ENV
-      const res = await fetch(`${API_BASE_URL}/api/v1/donations`, {
+      const res = await fetch("https://material-donation-backend-8.onrender.com/api/v1/donations", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -86,10 +96,9 @@ export default function Donate() {
       if (!res.ok) throw new Error("Failed to create donation");
       const donation = await res.json();
 
-      // 3️⃣ Using Localhost via ENV
       if (imageUrl && donation.id) {
         await fetch(
-          `${API_BASE_URL}/api/v1/donations/${donation.id}/images?imageUrl=${encodeURIComponent(imageUrl)}`,
+          `https://material-donation-backend-8.onrender.com/api/v1/donations/${donation.id}/images?imageUrl=${encodeURIComponent(imageUrl)}`,
           {
             method: "POST",
             headers: getAuthHeader() as any,
@@ -117,7 +126,6 @@ export default function Donate() {
           </div>
         )}
 
-        {/* Image Upload Area */}
         <div className="space-y-2">
           {!preview ? (
             <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
@@ -143,13 +151,15 @@ export default function Donate() {
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <select className="p-3 border rounded-lg bg-white outline-none focus:ring-2 focus:ring-green-500" required value={formData.condition} onChange={(e) => setFormData({ ...formData, condition: e.target.value })}>
             <option value="">Condition</option>
-            <option value="FAIR">New</option>
-            <option value="GOOD">Good</option>
+            <option value="NEW">New</option>
             <option value="LIKE_NEW">Like New</option>
-            <option value="POOR">Old</option>
+            <option value="GOOD">Good</option>
+            <option value="FAIR">Fair</option>
+            <option value="POOR">Poor</option>
           </select>
           <input type="number" min={1} placeholder="Quantity" className="p-3 border rounded-lg outline-none focus:ring-2 focus:ring-green-500" required value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })} />
         </div>
