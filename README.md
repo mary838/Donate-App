@@ -101,8 +101,10 @@ The platform solves these problems by:
 
 ### 🌐 Public Website
 - Home page (introduction & call-to-action)
+- Donate page
+- Browse page
+- How it works page
 - Contact page
-- FAQ page
 
 ### 🔐 Authentication & User Management
 - User registration (Donor / Requester)
