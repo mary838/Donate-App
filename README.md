@@ -152,13 +152,17 @@ The platform solves these problems by:
 
 ## 🔐 Technologies Used
 
-| Technology     | Description            |
-|---------------|------------------------|
-| Next.js       | Frontend framework     |
-| Tailwind CSS  | Styling framework      |
-| TypeScript    | Type safety            |
-| PostgreSQL    | Database (PgAdmin)     |
-| Vercel        | Deployment platform    |
+| Technology                  | Version     | Description                  |
+|---------------------------|------------|---------------------------------|
+| React                     | ^19.2.4    | Frontend library                |
+| TypeScript                | ~5.9.3     | Type safety                     |
+| Vite                      | ^8.0.1     | Build tool & dev server         |
+| Tailwind CSS              | ^4.2.2     | Styling framework               |
+| Axios                     | ^1.14.0    | HTTP client                     |
+| React Router DOM          | ^7.14.0    | Routing management              |
+| i18next                   | ^25.10.10  | Internationalization            |
+| ESLint                    | ^9.39.4    | Code linting                    |
+| js-cookie                 | ^3.0.5     | Cookie handling                 |
 
 ---
 
