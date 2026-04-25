@@ -1,129 +1,182 @@
 "use client";
-
-import { useEffect, useState, useMemo } from "react";
-import { Clock, Bell, Check, CheckCircle2, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-import { getNotifications } from "./service/notificationService";
+import { User, Send, Package, Check, X, Phone, ArrowLeft } from "lucide-react";
 
-type NotificationStatus = "pending" | "approved" | "rejected" | "info";
-
-interface Notification {
+interface RequestItem {
   id: string;
-  user: string;
-  action: string;
-  item: string;
-  comment?: string;
-  time: string;
-  status: NotificationStatus;
+  donationTitle: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  requesterName?: string;
+  requesterPhone?: string;
+  donorName?: string;
+  donorPhone?: string;
 }
 
-export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+const NotificationsPage = () => {
+  const navigate = useNavigate();
+  const [receivedRequests, setReceivedRequests] = useState<RequestItem[]>([]);
+  const [myRequests, setMyRequests] = useState<RequestItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      const token = Cookies.get("token");
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
+      const [rRes, mRes] = await Promise.all([
+        fetch("http://localhost:8080/api/v1/requests/received", { headers }),
+        fetch("http://localhost:8080/api/v1/requests/my", { headers }),
+      ]);
+
+      setReceivedRequests(rRes.ok ? await rRes.json() : []);
+      setMyRequests(mRes.ok ? await mRes.json() : []);
+    } catch (err) {
+      console.error("Fetch failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAction = async (id: string, action: "approve" | "reject") => {
+    try {
+      const token = Cookies.get("token");
+
+      const url = `http://localhost:8080/api/v1/requests/${id}/${action}`;
+      console.log("Calling:", url);
+
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("Status:", res.status);
+
+      const text = await res.text();
+      console.log("Response:", text);
+
+      if (res.ok) {
+        fetchData();
+      }
+    } catch (err) {
+      console.error("Action failed:", err);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const token = Cookies.get("token");
-      const userId = Cookies.get("userId");
-
-      if (!token || !userId) return;
-
-      try {
-        const data = await getNotifications(userId);
-        setNotifications(data);
-      } catch (err) {
-        console.error("Notification fetch error:", err);
-      }
-    };
-
     fetchData();
   }, []);
 
-  const pendingRequests = useMemo(
-    () => notifications.filter((n) => n.status === "pending"),
-    [notifications],
-  );
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400 font-medium">
+        Loading requests...
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] py-10 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold">Notifications</h1>
-          <p className="text-gray-500 text-sm">
-            Manage donation requests and updates
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#FDFCFB] py-12 px-6">
+      <div className="max-w-4xl mx-auto space-y-10">
 
-        {/* Pending */}
-        <section className="mb-10">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="text-yellow-500" />
-            <h2 className="font-bold">Pending Requests</h2>
-            <span className="bg-yellow-100 text-yellow-600 px-2 text-xs rounded">
-              {pendingRequests.length}
-            </span>
-          </div>
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-gray-500 hover:text-gray-800 font-semibold transition-all"
+        >
+          <ArrowLeft size={20} strokeWidth={2.5} /> Back to Profile
+        </button>
 
-          <div className="space-y-4">
-            {pendingRequests.map((n) => (
-              <div key={n.id} className="p-4 bg-yellow-50 rounded-xl">
-                <p>
-                  <b>{n.user}</b> {n.action} <b>{n.item}</b>
-                </p>
+        {/* INCOMING REQUESTS */}
+        <div className="bg-white p-10 rounded-[32px] shadow-sm border border-gray-100">
+          <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+            <User size={24} className="text-orange-500" /> Manage Incoming Requests
+          </h2>
 
-                {n.comment && (
-                  <p className="text-sm text-gray-500">{n.comment}</p>
-                )}
+          <div className="space-y-6">
+            {receivedRequests.map((req) => (
+              <div key={req.id} className="p-8 bg-[#F9FAFB] rounded-[24px] border border-gray-50 flex flex-col md:flex-row justify-between items-center gap-6">
 
-                <p className="text-xs text-gray-400">{n.time}</p>
+                <div className="flex-1 w-full space-y-3">
+                  <div className="inline-flex items-center gap-2 bg-[#E0E7FF] text-[#3730A3] px-4 py-1.5 rounded-full border border-[#C7D2FE]">
+                    <Package size={16} />
+                    <span className="text-xs font-bold uppercase tracking-wider">
+                      Item: {req.donationTitle}
+                    </span>
+                  </div>
 
-                <div className="flex gap-2 mt-2">
-                  <button className="bg-green-500 text-white px-3 py-1 rounded">
-                    Approve
-                  </button>
-                  <button className="bg-red-500 text-white px-3 py-1 rounded">
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+                  <h4 className="text-xl font-bold text-gray-900">
+                    Requested by: {req.requesterName}
+                  </h4>
 
-        {/* All */}
-        <section>
-          <div className="flex justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Bell />
-              <h2 className="font-bold">All Notifications</h2>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            {notifications.map((n) => (
-              <div
-                key={n.id}
-                className="p-3 bg-green-50 flex justify-between rounded"
-              >
-                <div>
-                  <p className="text-sm">
-                    <b>{n.user}</b> {n.action} <b>{n.item}</b>
-                  </p>
-                  <p className="text-xs text-gray-400">{n.time}</p>
+                  {req.status === "APPROVED" && (
+                    <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
+                      <span>Contact:</span>
+                      <a
+                        href={`tel:${req.requesterPhone}`}
+                        className="flex items-center gap-1.5 text-green-600 font-bold hover:underline"
+                      >
+                        <Phone size={16} /> {req.requesterPhone}
+                      </a>
+                    </div>
+                  )}
                 </div>
 
-                <div>
-                  {n.status === "approved" ? (
-                    <Check className="text-green-500" />
+                <div className="flex gap-3 w-full md:w-auto">
+                  {req.status === "PENDING" ? (
+                    <>
+                      <button
+                        onClick={() => handleAction(req.id, "approve")}
+                        className="bg-green-600 text-white px-6 py-2 rounded-full font-bold"
+                      >
+                        <Check size={18} /> Approve
+                      </button>
+
+                      <button
+                        onClick={() => handleAction(req.id, "reject")}
+                        className="bg-white text-red-500 border border-red-500 px-6 py-2 rounded-full font-bold"
+                      >
+                        <X size={18} /> Reject
+                      </button>
+                    </>
                   ) : (
-                    <Clock className="text-orange-400" />
+                    <span className="px-6 py-2 rounded-full font-bold">
+                      {req.status}
+                    </span>
                   )}
                 </div>
               </div>
             ))}
           </div>
-        </section>
+        </div>
+
+        {/* MY REQUESTS */}
+        <div className="bg-white p-10 rounded-[32px] shadow-sm border border-gray-100">
+          <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+            <Send size={24} className="text-blue-500" /> My Requests Status
+          </h2>
+
+          <div className="space-y-6">
+            {myRequests.map((req) => (
+              <div key={req.id} className="p-8 bg-[#F9FAFB] rounded-[24px] border border-gray-50 flex justify-between items-center">
+
+                <h4 className="font-bold">{req.donationTitle}</h4>
+
+                <span className="font-bold">{req.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );
-}
+};
+
+export default NotificationsPage;
